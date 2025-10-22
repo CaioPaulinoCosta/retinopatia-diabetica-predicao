@@ -36,12 +36,16 @@ WORKDIR /var/www/html
 # Copy existing application directory contents
 COPY . .
 
-# Copy existing application directory permissions
-COPY --chown=laravel:www-data . .
+# Install dependencies
+RUN composer install --optimize-autoloader --no-dev
+
+# Fix permissions
+RUN chown -R $user:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Change current user to www
 USER $user
 
-# Expose port 8000 and start php-fpm server
+# Expose port 8000 (interno do container) - O mapeamento para 8002 é feito no docker-compose
 EXPOSE 8000
 CMD php artisan serve --host=0.0.0.0 --port=8000
