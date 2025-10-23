@@ -2,47 +2,302 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Exam;
+use App\Models\ExamResult;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ExamResultController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Enviar exame para análise da ML API
      */
-    public function index()
+    public function analyzeExam(Request $request, string $examId): JsonResponse
     {
-        //
+        try {
+            $exam = Exam::with('patient')->find($examId);
+
+            if (!$exam) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Exame não encontrado'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            // Verificar se já existe resultado
+            if ($exam->result) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Este exame já possui resultado'
+                ], Response::HTTP_CONFLICT);
+            }
+
+            // Verificar se o exame tem imagem
+            if (!$exam->image_path) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Exame não possui imagem para análise'
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            // Chamar a ML API
+            $mlApiUrl = config('app.ml_api_url', 'http://ml-api:8000');
+
+            $response = Http::timeout(60)->post("{$mlApiUrl}/analyze", [
+                'image_url' => $exam->image_path
+            ]);
+
+            if (!$response->successful()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erro ao conectar com a API de análise',
+                    'error' => $response->body()
+                ], Response::HTTP_SERVICE_UNAVAILABLE);
+            }
+
+            $analysisResult = $response->json();
+
+            // Criar resultado do exame
+            $examResult = ExamResult::create([
+                'exam_id' => $exam->id,
+                'diagnosis' => $analysisResult['diagnosis'] ?? null,
+                'probability_dr' => $analysisResult['probability_dr'] ?? null,
+                'probability_no_dr' => $analysisResult['probability_no_dr'] ?? null,
+                'class_predicted' => $analysisResult['class_predicted'] ?? null,
+                'recommendation' => $analysisResult['recommendation'] ?? null,
+                'ml_api_response' => json_encode($analysisResult),
+                'is_auto_diagnosis' => true,
+                'analyzed_at' => now()
+            ]);
+
+            // Atualizar status do exame
+            $exam->update(['status' => 'completed']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Análise concluída com sucesso',
+                'data' => [
+                    'exam' => $exam->load('patient'),
+                    'result' => $examResult
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao analisar exame',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Adicionar diagnóstico manual
      */
-    public function store(Request $request)
+    public function storeManualDiagnosis(Request $request, string $examId): JsonResponse
     {
-        //
+        try {
+            $exam = Exam::with('patient')->find($examId);
+
+            if (!$exam) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Exame não encontrado'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            // Verificar se já existe resultado
+            if ($exam->result) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Este exame já possui resultado'
+                ], Response::HTTP_CONFLICT);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'diagnosis' => 'required|string|max:255',
+                'probability_dr' => 'nullable|numeric|between:0,1',
+                'probability_no_dr' => 'nullable|numeric|between:0,1',
+                'class_predicted' => 'nullable|integer',
+                'recommendation' => 'required|string',
+                'doctor_notes' => 'nullable|string'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dados inválidos',
+                    'errors' => $validator->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $examResult = ExamResult::create([
+                'exam_id' => $exam->id,
+                'diagnosis' => $request->diagnosis,
+                'probability_dr' => $request->probability_dr,
+                'probability_no_dr' => $request->probability_no_dr,
+                'class_predicted' => $request->class_predicted,
+                'recommendation' => $request->recommendation,
+                'doctor_notes' => $request->doctor_notes,
+                'is_auto_diagnosis' => false,
+                'analyzed_at' => now()
+            ]);
+
+            // Atualizar status do exame
+            $exam->update(['status' => 'completed']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Diagnóstico manual adicionado com sucesso',
+                'data' => [
+                    'exam' => $exam->load('patient'),
+                    'result' => $examResult
+                ]
+            ], Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao adicionar diagnóstico manual',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
-     * Display the specified resource.
+     * Atualizar resultado do exame
      */
-    public function show(string $id)
+    public function update(Request $request, string $id): JsonResponse
     {
-        //
+        try {
+            $examResult = ExamResult::with('exam.patient')->find($id);
+
+            if (!$examResult) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Resultado não encontrado'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'diagnosis' => 'sometimes|required|string|max:255',
+                'probability_dr' => 'nullable|numeric|between:0,1',
+                'probability_no_dr' => 'nullable|numeric|between:0,1',
+                'class_predicted' => 'nullable|integer',
+                'recommendation' => 'sometimes|required|string',
+                'doctor_notes' => 'nullable|string'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dados inválidos',
+                    'errors' => $validator->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $examResult->update($validator->validated());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Resultado atualizado com sucesso',
+                'data' => $examResult->load('exam.patient')
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao atualizar resultado',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
-     * Update the specified resource in storage.
+     * Gerar PDF do resultado do exame
      */
-    public function update(Request $request, string $id)
+    public function generatePdf(string $id): Response
     {
-        //
+        try {
+            $examResult = ExamResult::with(['exam', 'exam.patient'])->find($id);
+
+            if (!$examResult) {
+                abort(404, 'Resultado não encontrado');
+            }
+
+            $pdf = Pdf::loadView('exam-result', [
+                'result' => $examResult,
+                'exam' => $examResult->exam,
+                'patient' => $examResult->exam->patient
+            ]);
+
+            $filename = "resultado_exame_{$examResult->exam_id}_{$examResult->id}.pdf";
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            abort(500, 'Erro ao gerar PDF: ' . $e->getMessage());
+        }
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Exibir resultado do exame
      */
-    public function destroy(string $id)
+    public function show(string $id): JsonResponse
     {
-        //
+        try {
+            $examResult = ExamResult::with(['exam', 'exam.patient'])->find($id);
+
+            if (!$examResult) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Resultado não encontrado'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $examResult
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao buscar resultado',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Excluir resultado do exame
+     */
+    public function destroy(string $id): JsonResponse
+    {
+        try {
+            $examResult = ExamResult::find($id);
+
+            if (!$examResult) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Resultado não encontrado'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            // Reverter status do exame para pending
+            $examResult->exam->update(['status' => 'pending']);
+
+            $examResult->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Resultado excluído com sucesso'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao excluir resultado',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }
