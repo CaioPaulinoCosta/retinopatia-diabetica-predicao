@@ -55,7 +55,7 @@ class ExamController extends Controller
                 'patient_id' => 'required|exists:patients,id',
                 'exam_type' => 'required|string|max:255',
                 'description' => 'nullable|string',
-                'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240', // 10MB max
+                'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240',
                 'exam_date' => 'required|date|before_or_equal:today',
                 'notes' => 'nullable|string'
             ]);
@@ -68,7 +68,6 @@ class ExamController extends Controller
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
-            // Verificar se o paciente existe
             $patient = Patient::find($request->patient_id);
             if (!$patient) {
                 return response()->json([
@@ -77,14 +76,20 @@ class ExamController extends Controller
                 ], Response::HTTP_NOT_FOUND);
             }
 
-            // Upload da imagem para o Cloudinary
+            // Upload usando a mesma abordagem que funcionou no Tinker
             if ($request->hasFile('image')) {
-                $imagePath = $request->file('image')->store('exams', 'cloudinary');
+                $uploadedFile = $request->file('image');
 
-                // Se não tiver Cloudinary configurado, usar storage local temporariamente
-                if (!$imagePath) {
-                    $imagePath = $request->file('image')->store('exams', 'public');
-                }
+                // Criar instância do Cloudinary
+                $cloudinary = new \Cloudinary\Cloudinary(env('CLOUDINARY_URL'));
+
+                // Fazer upload
+                $uploadResult = $cloudinary->uploadApi()->upload(
+                    $uploadedFile->getRealPath(),
+                    ['folder' => 'clinic-exams']
+                );
+
+                $imagePath = $uploadResult['secure_url'];
             } else {
                 return response()->json([
                     'success' => false,
@@ -95,7 +100,7 @@ class ExamController extends Controller
             $examData = $validator->validated();
             $examData['image_path'] = $imagePath;
             $examData['status'] = 'pending';
-            unset($examData['image']); // Remover o campo de imagem do array
+            unset($examData['image']);
 
             $exam = Exam::create($examData);
 

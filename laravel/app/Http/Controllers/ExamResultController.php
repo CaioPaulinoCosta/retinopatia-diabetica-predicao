@@ -27,7 +27,6 @@ class ExamResultController extends Controller
                 ], Response::HTTP_NOT_FOUND);
             }
 
-            // Verificar se já existe resultado
             if ($exam->result) {
                 return response()->json([
                     'success' => false,
@@ -35,7 +34,6 @@ class ExamResultController extends Controller
                 ], Response::HTTP_CONFLICT);
             }
 
-            // Verificar se o exame tem imagem
             if (!$exam->image_path) {
                 return response()->json([
                     'success' => false,
@@ -43,12 +41,20 @@ class ExamResultController extends Controller
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
-            // Chamar a ML API
+            // Baixar a imagem do Cloudinary temporariamente
+            $tempImage = tempnam(sys_get_temp_dir(), 'exam_') . '.png';
+            $imageContent = file_get_contents($exam->image_path);
+            file_put_contents($tempImage, $imageContent);
+
+            // Chamar a ML API com upload de arquivo
             $mlApiUrl = config('app.ml_api_url', 'http://ml-api:8000');
 
-            $response = Http::timeout(60)->post("{$mlApiUrl}/analyze", [
-                'image_url' => $exam->image_path
-            ]);
+            $response = Http::timeout(60)
+                ->attach('image', file_get_contents($tempImage), 'exam_image.png')
+                ->post("{$mlApiUrl}/predict");
+
+            // Limpar arquivo temporário
+            unlink($tempImage);
 
             if (!$response->successful()) {
                 return response()->json([
@@ -85,6 +91,11 @@ class ExamResultController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
+            // Limpar arquivo temporário em caso de erro
+            if (isset($tempImage) && file_exists($tempImage)) {
+                unlink($tempImage);
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => 'Erro ao analisar exame',
