@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class ExamResultController extends Controller
 {
@@ -211,32 +210,6 @@ class ExamResultController extends Controller
                 'message' => 'Erro ao atualizar resultado',
                 'error' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Gerar PDF do resultado do exame
-     */
-    public function generatePdf(string $id): Response
-    {
-        try {
-            $examResult = ExamResult::with(['exam', 'exam.patient'])->find($id);
-
-            if (!$examResult) {
-                abort(404, 'Resultado não encontrado');
-            }
-
-            $pdf = Pdf::loadView('exam-result', [
-                'result' => $examResult,
-                'exam' => $examResult->exam,
-                'patient' => $examResult->exam->patient
-            ]);
-
-            $filename = "resultado_exame_{$examResult->exam_id}_{$examResult->id}.pdf";
-
-            return $pdf->download($filename);
-        } catch (\Exception $e) {
-            abort(500, 'Erro ao gerar PDF: ' . $e->getMessage());
         }
     }
 
