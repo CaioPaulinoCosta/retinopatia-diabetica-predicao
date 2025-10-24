@@ -17,11 +17,10 @@ services:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./mysql/init:/docker-entrypoint-initdb.d
     networks:
       - clinic-network
 
-  # Laravel Application (mantenha o resto igual)
+  # Laravel Application
   laravel:
     build:
       context: ./laravel
@@ -44,14 +43,35 @@ services:
       DB_USERNAME: clinic_user
       DB_PASSWORD: clinic_password
 
-  # ML API (mantenha igual)
+  # ML API - CORRIGIDO
   ml-api:
-    image: automated-detection-and-prediction-of-diabetic-retinopathy-ml-api
+    build:
+      context: ./python-ml-api # CORRIGIDO: era apenas "image"
+      dockerfile: Dockerfile
     container_name: clinic-ml-api
     ports:
       - "8001:8000"
     networks:
       - clinic-network
+
+  # React Frontend - CORRIGIDO
+  clinic-frontend:
+    build:
+      context: ./clinic-frontend # CORRIGIDO: era "."
+      dockerfile: Dockerfile
+    container_name: clinic-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./clinic-frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8002/api
+      - CHOKIDAR_USEPOLLING=true
+    networks:
+      - clinic-network
+    depends_on:
+      - laravel
 
 volumes:
   mysql_data:
