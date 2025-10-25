@@ -8,6 +8,7 @@ import { usePatients } from "../hooks/usePatients";
 import PatientList from "../components/patients/PatientList";
 import PatientForm from "../components/patients/PatientForm";
 import type { Patient } from "../types";
+import toast from "react-hot-toast";
 
 export default function PatientsPage() {
   const {
@@ -25,56 +26,45 @@ export default function PatientsPage() {
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  // DEBUG: Logs para troubleshooting
-  console.log("🔍 DEBUG - PatientsPage state:", {
-    patientsCount: patients?.length,
-    isLoading,
-    error: error?.message,
-    showForm,
-    editingPatient: editingPatient?.id,
-  });
+  const apiBaseUrl =
+    import.meta.env.VITE_API_BASE_URL || "API_URL_NÃO_CONFIGURADA";
 
-  // Funções de manipulação de dados
+  // Criar paciente
   const handleCreate = async (data: Omit<Patient, "id">) => {
-    console.log("🆕 DEBUG - Creating patient:", data);
-    try {
-      await createPatient(data);
-      setShowForm(false);
-      console.log("✅ DEBUG - Patient created successfully");
-    } catch (error) {
-      console.error("❌ DEBUG - Error creating patient:", error);
-      alert("Erro ao criar paciente. Verifique o console para detalhes.");
-    }
+    await toast.promise(
+      createPatient(data),
+      {
+        loading: "Cadastrando paciente...",
+        success: "Paciente cadastrado com sucesso.",
+        error: "Não foi possível cadastrar o paciente. Tente novamente.",
+      },
+      { success: { duration: 2500 }, error: { duration: 4000 } }
+    );
+    setShowForm(false);
   };
 
+  // Editar paciente
   const handleEdit = async (data: Omit<Patient, "id">) => {
-    if (editingPatient?.id) {
-      console.log("✏️ DEBUG - Updating patient:", editingPatient.id, data);
-      try {
-        await updatePatient({ id: editingPatient.id, data });
-        setEditingPatient(null);
-        console.log("✅ DEBUG - Patient updated successfully");
-      } catch (error) {
-        console.error("❌ DEBUG - Error updating patient:", error);
-        alert("Erro ao atualizar paciente. Verifique o console para detalhes.");
-      }
-    }
+    if (!editingPatient?.id) return;
+    await toast.promise(updatePatient({ id: editingPatient.id, data }), {
+      loading: "Atualizando paciente...",
+      success: "Paciente atualizado com sucesso.",
+      error: "Não foi possível atualizar o paciente.",
+    });
+    setEditingPatient(null);
   };
 
+  // Excluir paciente
   const handleDelete = async (id: number) => {
-    console.log("🗑️ DEBUG - Attempting to delete patient:", id);
-    if (confirm("Tem certeza que deseja excluir este paciente?")) {
-      try {
-        await deletePatient(id);
-        console.log("✅ DEBUG - Patient deleted successfully");
-      } catch (error) {
-        console.error("❌ DEBUG - Error deleting patient:", error);
-        alert("Erro ao excluir paciente. Verifique o console para detalhes.");
-      }
-    }
+    if (!confirm("Tem certeza que deseja excluir este paciente?")) return;
+    await toast.promise(deletePatient(id), {
+      loading: "Excluindo paciente...",
+      success: "Paciente excluído com sucesso.",
+      error: "Erro ao excluir paciente.",
+    });
   };
 
-  // Estado de erro
+  // Erro ao conectar à API
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
@@ -87,32 +77,24 @@ export default function PatientsPage() {
             Erro ao carregar pacientes
           </h2>
           <p className="text-gray-600 mb-4">
-            Não foi possível conectar com a API. Verifique se o servidor Laravel
-            está rodando.
+            Não foi possível conectar com o servidor. Tente novamente mais
+            tarde.
           </p>
           <div className="bg-gray-100 p-4 rounded-lg text-left">
-            <p className="text-sm text-gray-700">
-              <strong>URL da API:</strong> http://localhost:8002/api/patients
+            <p className="text-sm text-gray-700 break-all">
+              <strong>Endpoint:</strong> {apiBaseUrl}/api/patients
             </p>
             <p className="text-sm text-gray-700 mt-2">
-              <strong>Erro:</strong>{" "}
+              <strong>Detalhe:</strong>{" "}
               {(error as Error)?.message || "Erro desconhecido"}
             </p>
           </div>
-          <div className="mt-4 flex gap-2 justify-center">
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            >
-              Tentar Novamente
-            </button>
-            <button
-              onClick={() => setShowForm(true)}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-            >
-              Criar Paciente Offline
-            </button>
-          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Tentar novamente
+          </button>
         </div>
       </div>
     );
@@ -125,9 +107,6 @@ export default function PatientsPage() {
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Carregando pacientes...</p>
-          <p className="text-sm text-gray-500 mt-2">
-            Conectando com a API em: http://localhost:8002/api/patients
-          </p>
         </div>
       </div>
     );
@@ -139,10 +118,7 @@ export default function PatientsPage() {
       <div className="p-6">
         <PatientForm
           onSubmit={handleCreate}
-          onCancel={() => {
-            console.log("🚪 DEBUG - Cancel create form");
-            setShowForm(false);
-          }}
+          onCancel={() => setShowForm(false)}
           isLoading={isCreating}
         />
       </div>
@@ -156,55 +132,21 @@ export default function PatientsPage() {
         <PatientForm
           patient={editingPatient}
           onSubmit={handleEdit}
-          onCancel={() => {
-            console.log("🚪 DEBUG - Cancel edit form");
-            setEditingPatient(null);
-          }}
+          onCancel={() => setEditingPatient(null)}
           isLoading={isUpdating}
         />
       </div>
     );
   }
 
-  // Lista principal de pacientes
+  // Página principal
   return (
     <div className="p-6">
-      {/* DEBUG BUTTONS - REMOVER EM PRODUÇÃO */}
-      <div className="fixed top-4 right-4 flex gap-2 z-50">
-        <button
-          onClick={() => {
-            console.log("🐛 DEBUG - Manually setting showForm to true");
-            setShowForm(true);
-          }}
-          className="bg-red-500 text-white px-3 py-1 rounded text-sm shadow-lg"
-        >
-          DEBUG: Show Form
-        </button>
-        <button
-          onClick={() => {
-            console.log("🐛 DEBUG - Testing API connection");
-            fetch("http://localhost:8002/api/patients")
-              .then((r) => r.json())
-              .then((data) => console.log("🔌 DEBUG - API Response:", data))
-              .catch((err) => console.error("🔌 DEBUG - API Error:", err));
-          }}
-          className="bg-purple-500 text-white px-3 py-1 rounded text-sm shadow-lg"
-        >
-          DEBUG: Test API
-        </button>
-      </div>
-
       <PatientList
         patients={patients}
-        onEdit={(patient) => {
-          console.log("✏️ DEBUG - Editing patient:", patient.id);
-          setEditingPatient(patient);
-        }}
+        onEdit={setEditingPatient}
         onDelete={handleDelete}
-        onCreate={() => {
-          console.log("🆕 DEBUG - Creating new patient");
-          setShowForm(true);
-        }}
+        onCreate={() => setShowForm(true)}
         isLoading={isCreating || isDeleting}
       />
     </div>

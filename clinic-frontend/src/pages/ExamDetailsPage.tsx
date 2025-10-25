@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { PDFGenerator } from "../services/pdfGenerator";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowLeft,
@@ -60,10 +61,26 @@ export default function ExamDetailsPage() {
   }, [examId]);
 
   // Função para gerar PDF (placeholder)
-  const generatePDF = () => {
-    console.log("📄 DEBUG - Generating PDF for exam:", examId);
-    // TODO: Implementar geração de PDF
-    alert("Funcionalidade de PDF em desenvolvimento!");
+  const generatePDF = async () => {
+    if (!exam || !exam.patient) {
+      alert("Dados incompletos para gerar PDF");
+      return;
+    }
+
+    try {
+      console.log("📄 DEBUG - Generating PDF report...");
+
+      const reportData = {
+        exam,
+        result: result || undefined,
+        patient: exam.patient,
+      };
+
+      await PDFGenerator.generateExamReport(reportData);
+    } catch (error) {
+      console.error("❌ DEBUG - Error generating PDF:", error);
+      alert("Erro ao gerar PDF. Tente novamente.");
+    }
   };
 
   // Função para analisar exame com ML API

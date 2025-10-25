@@ -9,32 +9,26 @@ import { useExams } from "../hooks/useExams";
 import ExamForm from "../components/exams/ExamForm";
 import type { Exam } from "../types";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function ExamsPage() {
   const { exams, isLoading, error, createExam, isCreating } = useExams();
-
   const [showForm, setShowForm] = useState(false);
 
-  console.log("🔬 DEBUG - ExamsPage state:", {
-    examsCount: exams?.length,
-    isLoading,
-    error: error?.message,
-    showForm,
-  });
-
   const handleCreateExam = async (examData: FormData) => {
-    console.log("🆕 DEBUG - Creating exam with data:", examData);
-    try {
-      await createExam(examData);
-      setShowForm(false);
-      console.log("✅ DEBUG - Exam created successfully");
-    } catch (error) {
-      console.error("❌ DEBUG - Error creating exam:", error);
-      alert("Erro ao criar exame. Verifique o console para detalhes.");
-    }
+    await toast.promise(
+      createExam(examData),
+      {
+        loading: "Criando exame...",
+        success: "Exame criado com sucesso.",
+        error: "Não foi possível criar o exame. Tente novamente.",
+      },
+      { success: { duration: 2500 }, error: { duration: 4000 } }
+    );
+    setShowForm(false);
   };
 
-  // Estado de erro
+  // Estado de erro (sem expor endpoint/variáveis)
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
@@ -47,22 +41,13 @@ export default function ExamsPage() {
             Erro ao carregar exames
           </h2>
           <p className="text-gray-600 mb-4">
-            Não foi possível conectar com a API.
+            Não foi possível carregar os dados no momento.
           </p>
-          <div className="bg-gray-100 p-4 rounded-lg text-left">
-            <p className="text-sm text-gray-700">
-              <strong>URL da API:</strong> http://localhost:8002/api/exams
-            </p>
-            <p className="text-sm text-gray-700 mt-2">
-              <strong>Erro:</strong>{" "}
-              {(error as Error)?.message || "Erro desconhecido"}
-            </p>
-          </div>
           <button
             onClick={() => window.location.reload()}
-            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
           >
-            Tentar Novamente
+            Tentar novamente
           </button>
         </div>
       </div>
@@ -76,9 +61,6 @@ export default function ExamsPage() {
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Carregando exames...</p>
-          <p className="text-sm text-gray-500 mt-2">
-            Conectando com a API em: http://localhost:8002/api/exams
-          </p>
         </div>
       </div>
     );
@@ -90,16 +72,14 @@ export default function ExamsPage() {
       <div className="p-6">
         <ExamForm
           onSubmit={handleCreateExam}
-          onCancel={() => {
-            console.log("🚪 DEBUG - Cancel exam form");
-            setShowForm(false);
-          }}
+          onCancel={() => setShowForm(false)}
           isLoading={isCreating}
         />
       </div>
     );
   }
 
+  // Página principal
   return (
     <div className="p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -112,11 +92,9 @@ export default function ExamsPage() {
             {exams.length} exame(s) cadastrado(s)
           </p>
         </div>
+
         <button
-          onClick={() => {
-            console.log("🆕 DEBUG - Opening exam form");
-            setShowForm(true);
-          }}
+          onClick={() => setShowForm(true)}
           className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors flex items-center gap-2"
         >
           <FontAwesomeIcon icon={faPlus} />
@@ -143,7 +121,7 @@ export default function ExamsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {exams.map((exam) => (
+            {exams.map((exam: Exam) => (
               <Link
                 key={exam.id}
                 to={`/exams/${exam.id}`}
@@ -152,7 +130,7 @@ export default function ExamsPage() {
                 <div className="flex justify-between items-start">
                   <div>
                     <h4 className="font-semibold text-gray-900">
-                      {exam.exam_type} -{" "}
+                      {exam.exam_type} –{" "}
                       {exam.patient?.name || `Paciente ID: ${exam.patient_id}`}
                     </h4>
                     <p className="text-sm text-gray-600">
@@ -182,6 +160,7 @@ export default function ExamsPage() {
                     <p className="text-sm text-gray-500">ID: {exam.id}</p>
                   </div>
                 </div>
+
                 {exam.description && (
                   <p className="text-sm text-gray-700 mt-2">
                     {exam.description}
@@ -191,18 +170,6 @@ export default function ExamsPage() {
             ))}
           </div>
         )}
-      </div>
-
-      {/* DEBUG INFO - Remover em produção */}
-      <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-        <details>
-          <summary className="cursor-pointer font-medium text-gray-700">
-            🔬 DEBUG Info (Desenvolvimento)
-          </summary>
-          <pre className="mt-2 text-xs bg-white p-2 rounded border">
-            {JSON.stringify(exams, null, 2)}
-          </pre>
-        </details>
       </div>
     </div>
   );
