@@ -1,15 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState, type PropsWithChildren } from "react";
 import Footer from "../components/Footer";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faDashboard,
-  faUserInjured,
-  faMicroscope,
-  faChartLine,
-} from "@fortawesome/free-solid-svg-icons";
 
-/** Reveal: anima elementos quando entram no viewport (sem libs externas) */
 function Reveal({
   children,
   delay = 0,
@@ -76,7 +68,7 @@ export default function HomePage() {
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <Link
-                to="/patients"
+                to="/login"
                 className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition"
               >
                 Começar agora

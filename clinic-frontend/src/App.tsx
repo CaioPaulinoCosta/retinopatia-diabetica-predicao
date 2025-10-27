@@ -1,27 +1,36 @@
-import { Routes, Route } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+// src/App.tsx
+import { Routes, Route, Navigate } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "react-hot-toast";
+import queryClient from "./queryClient";
 import Layout from "./components/Layout";
 import HomePage from "./pages/HomePage";
+import DashboardPage from "./pages/DashboardPage";
 import PatientsPage from "./pages/PatientsPage";
 import ExamsPage from "./pages/ExamsPage";
-import DashboardPage from "./pages/DashboardPage";
 import ExamDetailsPage from "./pages/ExamDetailsPage";
-import { Toaster } from "react-hot-toast";
+import LoginPage from "./pages/Login";
+import type { ReactNode } from "react";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1, // evita loop infinito de requisições com erro
-      refetchOnWindowFocus: false, // não refaz fetch ao trocar de aba
-      staleTime: 1000 * 60, // 1 min de cache
-    },
-  },
-});
+// 🔐 Componente para proteger rotas com tipagem
+interface ProtectedRouteProps {
+  children: ReactNode;
+  role?: "admin" | "user";
+}
+
+function ProtectedRoute({ children, role }: ProtectedRouteProps) {
+  const token = localStorage.getItem("token");
+  const userRole = localStorage.getItem("role");
+
+  if (!token) return <Navigate to="/login" replace />;
+  if (role && userRole !== role) return <Navigate to="/" replace />;
+
+  return <>{children}</>;
+}
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Toaster global — aparece em todas as páginas */}
       <Toaster
         position="top-right"
         toastOptions={{
@@ -32,14 +41,45 @@ function App() {
         }}
       />
 
-      {/* Rotas principais */}
       <Routes>
+        <Route path="/login" element={<LoginPage />} />
+
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="patients" element={<PatientsPage />} />
-          <Route path="exams" element={<ExamsPage />} />
-          <Route path="exams/:id" element={<ExamDetailsPage />} />
+
+          <Route
+            path="dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="patients"
+            element={
+              <ProtectedRoute role="admin">
+                <PatientsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="exams"
+            element={
+              <ProtectedRoute role="admin">
+                <ExamsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="exams/:id"
+            element={
+              <ProtectedRoute role="admin">
+                <ExamDetailsPage />
+              </ProtectedRoute>
+            }
+          />
         </Route>
       </Routes>
     </QueryClientProvider>

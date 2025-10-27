@@ -1,14 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faUser,
-  faExclamationTriangle,
-} from "@fortawesome/free-solid-svg-icons";
+import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
 import { usePatients } from "../hooks/usePatients";
 import PatientList from "../components/patients/PatientList";
 import PatientForm from "../components/patients/PatientForm";
 import type { Patient } from "../types";
 import toast from "react-hot-toast";
+import { api } from "../services/api";
 
 export default function PatientsPage() {
   const {
@@ -64,7 +62,16 @@ export default function PatientsPage() {
     });
   };
 
-  // Erro ao conectar à API
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    api
+      .get("/auth/me")
+      .then((res) => setUser(res.data))
+      .catch(() => (window.location.href = "/login"));
+  }, []);
+
+  if (!user) return <p>Carregando...</p>;
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">

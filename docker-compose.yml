@@ -46,7 +46,7 @@ services:
   # ML API - CORRIGIDO
   ml-api:
     build:
-      context: ./python-ml-api # CORRIGIDO: era apenas "image"
+      context: ./python-ml-api
       dockerfile: Dockerfile
     container_name: clinic-ml-api
     ports:

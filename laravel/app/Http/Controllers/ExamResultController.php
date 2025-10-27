@@ -104,6 +104,27 @@ class ExamResultController extends Controller
         }
     }
 
+    public function index(): JsonResponse
+    {
+        try {
+            $examResults = ExamResult::with(['exam.patient'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $examResults,
+                'message' => 'Exam results retrieved successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve exam results',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     /**
      * Adicionar diagnóstico manual
      */
@@ -175,6 +196,7 @@ class ExamResultController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
 
     /**
      * Atualizar resultado do exame
