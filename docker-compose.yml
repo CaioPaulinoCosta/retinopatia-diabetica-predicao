@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   # MySQL Database
   mysql:
@@ -20,16 +22,16 @@ services:
     networks:
       - clinic-network
 
-  # Laravel Application
-  laravel:
+  # Backend Laravel API
+  backend:
     build:
-      context: ./laravel
+      context: ./backend
       dockerfile: Dockerfile
     container_name: clinic-laravel
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
-      - ./laravel:/var/www/html
+      - ./backend:/var/www/html
     ports:
       - "8002:8000"
     depends_on:
@@ -43,7 +45,7 @@ services:
       DB_USERNAME: clinic_user
       DB_PASSWORD: clinic_password
 
-  # ML API - CORRIGIDO
+  # ML API
   ml-api:
     build:
       context: ./python-ml-api
@@ -54,27 +56,32 @@ services:
     networks:
       - clinic-network
 
-  # React Frontend - CORRIGIDO
-  clinic-frontend:
+  # Next.js Frontend
+  frontend:
     build:
-      context: ./clinic-frontend # CORRIGIDO: era "."
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: clinic-frontend
     ports:
       - "3000:3000"
     volumes:
-      - ./clinic-frontend:/app
+      - ./frontend:/app
       - /app/node_modules
     environment:
-      - VITE_API_BASE_URL=http://localhost:8002/api
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8002/api
       - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - WATCHPACK_POLLING_INTERVAL=1000
+    command: sh -c "npm run dev"
     networks:
       - clinic-network
     depends_on:
-      - laravel
+      - backend
 
 volumes:
   mysql_data:
+  node_modules:
 
 networks:
   clinic-network:

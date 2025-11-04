@@ -1,0 +1,24 @@
+"use client";
+
+import { Hero } from "../components/Home/Hero";
+import { About } from "../components/Home/About";
+import { Features } from "../components/Home/Features";
+import { Technologies } from "../components/Home/Technologies";
+import { Footer } from "../components/Footer";
+
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-100">
+      {/* HERO */}
+      <Hero />
+      {/* SOBE O PROJETO */}
+      <About />
+      {/* FUNCIONALIDADES */}
+      <Features />
+      {/* TECNOLOGIAS */}
+      <Technologies />
+      {/* RODAPÉ */}
+      <Footer />
+    </div>
+  );
+}
