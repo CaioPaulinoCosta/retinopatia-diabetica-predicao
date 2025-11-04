@@ -2,7 +2,7 @@
 
 ## Introdução
 
-Este projeto apresenta um sistema web completo capaz de realizar a predição automatizada de **retinopatia diabética** a partir de imagens oculares submetidas por meio de um ambiente clínico simulado. A aplicação integra um modelo de _machine learning_ desenvolvido em **Python (FastAPI)**, uma **API de backend em Laravel** e uma **interface web construída em React**, todos orquestrados por **Docker** para execução integrada e consistente.
+Este projeto apresenta um sistema web completo capaz de realizar a predição automatizada de **retinopatia diabética** a partir de imagens oculares submetidas por meio de um ambiente clínico simulado. A aplicação integra um modelo de _machine learning_ desenvolvido em **Python (FastAPI)**, uma **API de backend em Laravel** e uma **interface web construída em React com Next.js**, todos orquestrados por **Docker** para execução integrada e consistente.
 
 A proposta surgiu inicialmente em um contexto acadêmico na disciplina de Inteligência Artificial, ministrada pelo professor Vinicius Godoy, e foi posteriormente aprimorada com o objetivo de demonstrar a aplicação prática de redes neurais na área da saúde, com potencial de uso real em clínicas especializadas.
 
@@ -75,7 +75,7 @@ O relatório segue um padrão profissional, destacando dados do paciente, detalh
 
 <!-- Inserir aqui imagem de exemplo do relatório em PDF -->
 
-👉 Exemplo de relatório gerado:
+Exemplo de relatório gerado:
 
 ```
 DIAGNÓSTICO: COM RETINOPATIA DIABÉTICA
@@ -97,17 +97,17 @@ docker-compose up --build
 
 Em poucos instantes, todos os containers (FastAPI, Laravel, React e banco de dados) estarão ativos e interconectados.
 
-👉 Quando a aplicação estiver em execução, acesse no navegador algo como:
+Quando a aplicação estiver em execução, acesse no navegador algo como:
 
 ```
-http://localhost:3000
+👉 http://localhost:3000
 ```
 
 ---
 
 ## Considerações Finais
 
-O projeto **Retinopatia Diabética – Predição Automática** demonstra o potencial do uso de modelos de _deep learning_ aplicados à medicina, aliado a boas práticas de engenharia de software. A separação entre módulos, a estrutura containerizada e o uso de ferramentas modernas como FastAPI, Laravel e React conferem robustez e escalabilidade à solução.
+O projeto **Retinopatia Diabética – Predição Automática** demonstra o potencial do uso de modelos de _machine learning_ aplicados à medicina, aliado a boas práticas de engenharia de software. A separação entre módulos, a estrutura containerizada e o uso de ferramentas modernas como FastAPI, Laravel e React conferem robustez e escalabilidade à solução.
 
 Mais do que um estudo técnico, o projeto representa uma proposta prática de apoio diagnóstico, que pode futuramente ser expandida com novos modelos e funcionalidades clínicas.
 
