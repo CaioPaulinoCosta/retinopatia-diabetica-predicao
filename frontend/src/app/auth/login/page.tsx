@@ -3,9 +3,40 @@
 import { FontAwesomeIcon, icons } from "../../../lib/icons";
 import { useAppNavigation } from "../../../hooks/useAppNavigation";
 import { routes } from "../../../config/routes";
+import { useState } from "react";
+import { loginUser } from "@/services/authService";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const { goTo } = useAppNavigation();
+  const router = useRouter();
+
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const data = await loginUser(formData);
+      localStorage.setItem("token", data.access_token);
+      setTimeout(() => {
+        router.push(routes.dashboard);
+      }, 300);
+    } catch (err: any) {
+      console.error(err);
+      setError("Erro ao entrar. Verifique os dados e tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-sky-50 to-indigo-100 flex items-center justify-center px-4">
@@ -23,7 +54,7 @@ export default function LoginPage() {
         </div>
 
         {/* FORMULÁRIO */}
-        <form className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Email
@@ -32,6 +63,11 @@ export default function LoginPage() {
               type="email"
               placeholder="seuemail@exemplo.com"
               className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none transition shadow-sm"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+              required
             />
           </div>
 
@@ -44,6 +80,11 @@ export default function LoginPage() {
                 type="password"
                 placeholder="********"
                 className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none transition shadow-sm"
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+                required
               />
               <FontAwesomeIcon
                 icon={icons.lock}
@@ -52,11 +93,14 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+
           <button
             type="submit"
+            disabled={loading}
             className="w-full bg-sky-500 hover:bg-sky-700 text-white py-3 rounded-xl font-semibold shadow-md transition"
           >
-            Entrar
+            {loading ? "Entrando..." : "Entrar"}
           </button>
         </form>
 
