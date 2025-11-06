@@ -5,7 +5,7 @@ import { About } from "../components/Home/About";
 import { Features } from "../components/Home/Features";
 import { Technologies } from "../components/Home/Technologies";
 import { Footer } from "../components/Footer";
-import PublicRoute from "@/components/auth/PublicRoute";
+import PublicRoute from "@/components/Auth/PublicRoutes";
 
 export default function Home() {
   return (

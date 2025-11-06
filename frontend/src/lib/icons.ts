@@ -7,6 +7,8 @@ import {
   faLock,
   faUserPlus,
   faEnvelope,
+  faStethoscope,
+  faDashboard,
 } from "@fortawesome/free-solid-svg-icons";
 
 import { faGithub, faLinkedin } from "@fortawesome/free-brands-svg-icons";
@@ -19,6 +21,8 @@ export const icons = {
   lock: faLock,
   userPlus: faUserPlus,
   envelope: faEnvelope,
+  stethoscope: faStethoscope,
+  dashboard: faDashboard,
 };
 
 export const brandsIcons = {

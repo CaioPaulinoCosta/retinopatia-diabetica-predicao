@@ -15,12 +15,14 @@ export default function PrivateRoute({
   const pathname = usePathname();
 
   useEffect(() => {
-    if (isLoading) return;
-
-    if (!user) {
-      router.push(routes.home);
+    // só tenta redirecionar depois que terminou de carregar o token
+    if (!isLoading && !user) {
+      const timeout = setTimeout(() => {
+        router.push(routes.home);
+      }, 500); // dá um tempinho para o hook terminar de processar
+      return () => clearTimeout(timeout);
     }
-  }, [user, isLoading, pathname, router]);
+  }, [user, isLoading, router]);
 
   if (isLoading) {
     return (

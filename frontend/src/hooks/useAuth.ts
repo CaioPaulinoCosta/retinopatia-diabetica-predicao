@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 import { routes } from "@/config/routes";
-import { getUser } from "@/services/authService";
+import api from "@/lib/api";
 
 interface DecodedToken {
   id: number;
@@ -22,10 +22,10 @@ interface UserData {
 }
 
 export function useAuth() {
-  const [user, setUser] = useState<DecodedToken | null>(null);
+  const router = useRouter();
+  const [user, setUser] = useState<UserData | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -44,23 +44,29 @@ export function useAuth() {
         localStorage.removeItem("token");
         setIsAuthenticated(false);
         setUser(null);
-      } else {
-        setUser(decoded);
-        setIsAuthenticated(true);
-        getUser()
-          .then((data) => {
-            setUser(data);
-          })
-          .catch((err) => {
-            localStorage.removeItem("token");
-            setIsAuthenticated(false);
-            setUser(null);
-          });
+        router.push(routes.home);
+        return;
       }
+
+      setIsAuthenticated(true);
+
+      // Busca dados do usuário no backend
+      api
+        .get("/auth/me")
+        .then((res) => setUser(res.data))
+        .catch(() => {
+          localStorage.removeItem("token");
+          setIsAuthenticated(false);
+          setUser(null);
+          router.push(routes.home);
+        });
     } catch (err) {
       console.error("[useAuth] Erro ao decodificar token:", err);
+      console.error("Erro ao decodificar token:", err);
       localStorage.removeItem("token");
       setIsAuthenticated(false);
+      setUser(null);
+      router.push(routes.home);
     } finally {
       setIsLoading(false);
     }
@@ -73,5 +79,5 @@ export function useAuth() {
     router.push(routes.home);
   }
 
-  return { user, isAuthenticated, isLoading, logout };
+  return { api, user, isAuthenticated, isLoading, logout }; // <-- retorna sua instância já configurada
 }
