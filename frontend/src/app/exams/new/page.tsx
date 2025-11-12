@@ -2,15 +2,15 @@
 
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import PatientForm from "@/components/Patients/PatientForm";
+import ExamForm from "@/components/Exams/ExamForm";
 import PrivateRoute from "@/components/Auth/PrivateRoutes";
 
-export default function NewPatientPage() {
+export default function NewExamPage() {
   return (
     <PrivateRoute>
       <>
         <Header />
-        <PatientForm />
+        <ExamForm />
         <Footer />
       </>
     </PrivateRoute>

@@ -50,3 +50,11 @@ export async function updatePatient(
 export async function deletePatient(id: number): Promise<void> {
   await api.delete(`/patients/${id}`);
 }
+
+// Adicione esta função se necessário para o contador de pacientes
+export const getPatientsCount = async (): Promise<number> => {
+  const response = await fetch("/api/patients/count");
+  if (!response.ok) throw new Error("Erro ao buscar contagem de pacientes");
+  const data = await response.json();
+  return data.count;
+};
