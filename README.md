@@ -86,4 +86,23 @@ A aplicação ficará disponível em:
 
 O projeto demonstra a integração de IA com engenharia de software moderna, utilizando um modelo treinado no Google Colab, servido via FastAPI, e acessado por uma interface desenvolvida em **React + Next.js**.
 
+---
+
+## Página de Apresentação do Projeto
+
+O projeto conta com um **site institucional de apresentação**, desenvolvido com o objetivo de **documentar e divulgar** a proposta, a arquitetura e os resultados obtidos ao longo do desenvolvimento.
+
+Nessa página, são apresentados:
+
+- Contexto e motivação do projeto;
+- Descrição detalhada da arquitetura do sistema;
+- Tecnologias utilizadas em cada camada;
+- Imagens e registros visuais da aplicação;
+- Resultados e métricas alcançadas pelo modelo de IA.
+
+🔗 Acesse a página do projeto:  
+👉 https://retinopatia-diabetica-d29dc.web.app/
+
+O site tem caráter **informativo e demonstrativo**, servindo como material de apoio para apresentações acadêmicas, portfólio técnico e documentação complementar
+
 Se você gostou da ideia e do projeto, não esqueça de deixar uma ⭐ no repositório!
