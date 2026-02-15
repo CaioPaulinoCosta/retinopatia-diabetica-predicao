@@ -2,7 +2,7 @@
 
 ## Introdução
 
-Este projeto apresenta um sistema web completo capaz de realizar a predição automatizada de **retinopatia diabética** a partir de imagens oculares submetidas por meio de um ambiente clínico simulado. A aplicação integra um modelo de _machine learning_ desenvolvido inicialmente no **Google Colab**, posteriormente disponibilizado via **FastAPI**, uma **API de backend em Laravel** e uma **interface web construída em React + Next.js**, todos orquestrados por **Docker**.
+Este projeto apresenta um sistema web completo capaz de realizar a predição automatizada de **retinopatia diabética** a partir de imagens oculares submetidas por meio de um ambiente clínico simulado. A aplicação integra um modelo de _deep learning_ desenvolvido inicialmente no **Google Colab**, posteriormente disponibilizado via **FastAPI**, uma **API de backend em Laravel** e uma **interface web construída em React + Next.js**, todos orquestrados por **Docker**.
 
 A proposta surgiu em um contexto acadêmico na disciplina de Inteligência Artificial, ministrada pelo professor Vinicius Godoy, e foi posteriormente aprimorada com o objetivo de demonstrar a aplicação prática de redes neurais na área da saúde.
 
@@ -24,7 +24,7 @@ A plataforma simula o ambiente digital de uma clínica médica especializada, pe
 
 O sistema é dividido em três módulos principais:
 
-- **FastAPI (Python)**: utilizado para carregar o modelo de machine learning e realizar as predições de maneira rápida, escalável e fácil de atualizar.
+- **FastAPI (Python)**: utilizado para carregar o modelo de deep learning e realizar as predições de maneira rápida, escalável e fácil de atualizar.
 - **Laravel (PHP)**: API administrativa central, responsável pelo gerenciamento de pacientes, exames, usuários e integrações.
 - **React + Next.js (TypeScript)**: frontend do projeto, oferecendo maior performance, SSR/SSG e experiência fluida ao usuário.
 - **Docker**: containerização dos serviços.
@@ -32,7 +32,7 @@ O sistema é dividido em três módulos principais:
 
 ---
 
-## Modelo de Machine Learning
+## Modelo de Deep Learning
 
 O modelo foi **desenvolvido e treinado inicialmente no Google Colab**, permitindo experimentação rápida, testes controlados e monitoramento das métricas.
 
